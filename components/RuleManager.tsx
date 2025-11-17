@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,6 +20,9 @@ import { getSettings, saveSettings } from '@/utils/settings';
 export function RuleManager() {
   const [open, setOpen] = useState(false);
   const [rules, setRules] = useState<GroupingRule[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isComposing, setIsComposing] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -30,13 +33,20 @@ export function RuleManager() {
   const loadRules = async () => {
     const settings = await getSettings();
     setRules(settings.groupingRules || []);
+    setIsInitialLoad(true);
   };
 
-  const handleSaveRules = async (newRules: GroupingRule[]) => {
-    const settings = await getSettings();
-    await saveSettings({ ...settings, groupingRules: newRules });
-    setRules(newRules);
-  };
+  useEffect(() => {
+    if (!isInitialLoad) {
+      const saveRules = async () => {
+        const settings = await getSettings();
+        await saveSettings({ ...settings, groupingRules: rules });
+      };
+      saveRules();
+    } else {
+      setIsInitialLoad(false);
+    }
+  }, [rules, isInitialLoad]);
 
   const handleAddRule = () => {
     const newRule: GroupingRule = {
@@ -48,19 +58,24 @@ export function RuleManager() {
       groupName: '未命名分组',
       enabled: true,
     };
-    handleSaveRules([...rules, newRule]);
+    setRules([...rules, newRule]);
+    setTimeout(() => {
+      if (scrollAreaRef.current) {
+        scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   const handleUpdateRule = (id: string, updatedRule: Partial<GroupingRule>) => {
-    const newRules = rules.map((rule) =>
-      rule.id === id ? { ...rule, ...updatedRule } : rule
+    setRules(
+      rules.map((rule) =>
+        rule.id === id ? { ...rule, ...updatedRule } : rule
+      )
     );
-    handleSaveRules(newRules);
   };
 
   const handleDeleteRule = (id: string) => {
-    const newRules = rules.filter((rule) => rule.id !== id);
-    handleSaveRules(newRules);
+    setRules(rules.filter((rule) => rule.id !== id));
   };
 
   return (
@@ -79,14 +94,24 @@ export function RuleManager() {
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[400px] p-4">
+        <ScrollArea className="h-[400px] p-4" ref={scrollAreaRef}>
           <div className="space-y-4">
             {rules.map((rule) => (
-              <div key={rule.id} className="border rounded-lg p-4 space-y-3">
+              <div key={rule.id} className="border rounded-lg p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <Input
-                    value={rule.name}
-                    onChange={(e) => handleUpdateRule(rule.id, { name: e.target.value })}
+                    defaultValue={rule.name}
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={(e) => {
+                      setIsComposing(false);
+                      handleUpdateRule(rule.id, { name: (e.target as HTMLInputElement).value });
+                    }}
+                    onChange={(e) => {
+                      if (!isComposing) {
+                        handleUpdateRule(rule.id, { name: e.target.value });
+                      }
+                    }}
+                    onBlur={(e) => handleUpdateRule(rule.id, { name: e.target.value })}
                     className="text-lg font-semibold"
                   />
                   <div className="flex items-center gap-2">
@@ -99,7 +124,7 @@ export function RuleManager() {
                     </Button>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                   <div>
                     <Label>匹配类型</Label>
                     <select
@@ -125,19 +150,39 @@ export function RuleManager() {
                       <option value="regex">正则匹配</option>
                     </select>
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <Label>分组名称</Label>
                     <Input
-                      value={rule.groupName}
-                      onChange={(e) => handleUpdateRule(rule.id, { groupName: e.target.value })}
+                      defaultValue={rule.groupName}
+                      onCompositionStart={() => setIsComposing(true)}
+                      onCompositionEnd={(e) => {
+                        setIsComposing(false);
+                        handleUpdateRule(rule.id, { groupName: (e.target as HTMLInputElement).value });
+                      }}
+                      onChange={(e) => {
+                        if (!isComposing) {
+                          handleUpdateRule(rule.id, { groupName: e.target.value });
+                        }
+                      }}
+                      onBlur={(e) => handleUpdateRule(rule.id, { groupName: e.target.value })}
                     />
                   </div>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <Label>匹配内容</Label>
                   <Input
-                    value={rule.value}
-                    onChange={(e) => handleUpdateRule(rule.id, { value: e.target.value })}
+                    defaultValue={rule.value}
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={(e) => {
+                      setIsComposing(false);
+                      handleUpdateRule(rule.id, { value: (e.target as HTMLInputElement).value });
+                    }}
+                    onChange={(e) => {
+                      if (!isComposing) {
+                        handleUpdateRule(rule.id, { value: e.target.value });
+                      }
+                    }}
+                    onBlur={(e) => handleUpdateRule(rule.id, { value: e.target.value })}
                     placeholder="例如: github.com"
                   />
                 </div>
