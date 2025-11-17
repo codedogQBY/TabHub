@@ -145,3 +145,36 @@ export async function closeTabs(tabIds: number[]): Promise<void> {
     console.error('Failed to close tabs:', error);
   }
 }
+
+/**
+ * 固定或取消固定页签
+ */
+export async function pinTab(tabId: number, pinned: boolean): Promise<void> {
+  try {
+    await chrome.tabs.update(tabId, { pinned });
+  } catch (error) {
+    console.error('Failed to pin tab:', error);
+  }
+}
+
+/**
+ * 静音或取消静音页签
+ */
+export async function muteTab(tabId: number, muted: boolean): Promise<void> {
+  try {
+    await chrome.tabs.update(tabId, { muted });
+  } catch (error) {
+    console.error('Failed to mute tab:', error);
+  }
+}
+
+/**
+ * 重新加载页签
+ */
+export async function reloadTab(tabId: number): Promise<void> {
+  try {
+    await chrome.tabs.reload(tabId);
+  } catch (error) {
+    console.error('Failed to reload tab:', error);
+  }
+}

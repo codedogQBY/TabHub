@@ -4,9 +4,26 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Globe, Layout, Layers, X, Volume2, Pin } from 'lucide-react';
+import { Globe, Layout, Layers, X, Volume2, Pin, Copy, XCircle, RefreshCw, VolumeX } from 'lucide-react';
 import type { TabInfo, TabGroup, GroupDimension } from '@/types';
-import { getAllTabs, getCurrentWindowTabs, groupTabsByDomain, groupTabsByWindow, switchToTab, closeTab } from '@/utils/tabs';
+import {
+  getAllTabs,
+  getCurrentWindowTabs,
+  groupTabsByDomain,
+  groupTabsByWindow,
+  switchToTab,
+  closeTab,
+  closeTabs,
+  pinTab,
+  muteTab,
+  reloadTab,
+} from '@/utils/tabs';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 export function TabGroupsView() {
   const [allTabs, setAllTabs] = useState<TabInfo[]>([]);
@@ -48,45 +65,93 @@ export function TabGroupsView() {
     }
   }, [allTabs, groupDimension]);
 
-  const handleCloseTab = async (tabId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleCloseTab = async (tabId: number) => {
     await closeTab(tabId);
     loadTabs();
   };
 
+  const handleCloseGroup = async (group: TabGroup) => {
+    const tabIds = group.tabs.map((t) => t.id);
+    await closeTabs(tabIds);
+    loadTabs();
+  };
+
+  const handlePinTab = async (tabId: number, pinned: boolean) => {
+    await pinTab(tabId, pinned);
+    loadTabs();
+  };
+
+  const handleMuteTab = async (tabId: number, muted: boolean) => {
+    await muteTab(tabId, muted);
+    loadTabs();
+  };
+
+  const handleReloadTab = async (tabId: number) => {
+    await reloadTab(tabId);
+  };
+
   const renderTab = (tab: TabInfo) => (
-    <div
-      key={tab.id}
-      className="flex items-center gap-2 rounded-md border p-2 hover:bg-accent cursor-pointer transition-colors group"
-      onClick={() => switchToTab(tab.id)}
-    >
-      {tab.favIconUrl && (
-        <img src={tab.favIconUrl} alt="" className="h-4 w-4 flex-shrink-0" />
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="text-sm truncate font-medium">{tab.title || '无标题'}</div>
-        <div className="text-xs text-muted-foreground truncate">{tab.url}</div>
-      </div>
-      <div className="flex items-center gap-1 flex-shrink-0">
-        {tab.audible && (
-          <Volume2 className="h-3 w-3 text-orange-500" />
-        )}
-        {tab.pinned && (
-          <Pin className="h-3 w-3 text-purple-500" />
-        )}
-        {tab.active && (
-          <Badge variant="outline" className="text-xs">活跃</Badge>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100"
-          onClick={(e) => handleCloseTab(tab.id, e)}
+    <ContextMenu>
+      <ContextMenuTrigger>
+        <div
+          key={tab.id}
+          className="flex items-center gap-2 rounded-md border p-2 hover:bg-accent cursor-pointer transition-colors group"
+          onClick={() => switchToTab(tab.id)}
         >
-          <X className="h-3 w-3" />
-        </Button>
-      </div>
-    </div>
+          {tab.favIconUrl && (
+            <img src={tab.favIconUrl} alt="" className="h-4 w-4 flex-shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="text-sm truncate font-medium">{tab.title || '无标题'}</div>
+            <div className="text-xs text-muted-foreground truncate">{tab.url}</div>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {tab.audible && (
+              <Volume2 className="h-3 w-3 text-orange-500" />
+            )}
+            {tab.pinned && (
+              <Pin className="h-3 w-3 text-purple-500" />
+            )}
+            {tab.active && (
+              <Badge variant="outline" className="text-xs">活跃</Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCloseTab(tab.id);
+              }}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem onSelect={() => handleCloseTab(tab.id)}>
+          <XCircle className="mr-2 h-4 w-4" />
+          关闭标签页
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={() => navigator.clipboard.writeText(tab.url || '')}>
+          <Copy className="mr-2 h-4 w-4" />
+          复制链接
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={() => handlePinTab(tab.id, !tab.pinned)}>
+          <Pin className="mr-2 h-4 w-4" />
+          {tab.pinned ? '取消固定' : '固定标签页'}
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={() => handleMuteTab(tab.id, !tab.audible)}>
+          {tab.audible ? <VolumeX className="mr-2 h-4 w-4" /> : <Volume2 className="mr-2 h-4 w-4" />}
+          {tab.audible ? '静音标签页' : '取消静音'}
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={() => handleReloadTab(tab.id)}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          重新加载
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 
   return (
@@ -111,22 +176,32 @@ export function TabGroupsView() {
           <ScrollArea className="h-[400px]">
             <Accordion type="multiple" defaultValue={groups.slice(0, 3).map((_, i) => `item-${i}`)} className="w-full">
               {groups.map((group, index) => (
-                <AccordionItem key={index} value={`item-${index}`}>
-                  <AccordionTrigger className="hover:no-underline">
-                    <div className="flex items-center gap-2">
-                      {group.favicon && (
-                        <img src={group.favicon} alt="" className="h-4 w-4" />
-                      )}
-                      <span className="font-medium">{group.domain}</span>
-                      <Badge variant="secondary">{group.tabs.length}</Badge>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="space-y-2 pt-2">
-                      {group.tabs.map(renderTab)}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+                <ContextMenu key={index}>
+                  <ContextMenuTrigger>
+                    <AccordionItem value={`item-${index}`}>
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          {group.favicon && (
+                            <img src={group.favicon} alt="" className="h-4 w-4" />
+                          )}
+                          <span className="font-medium">{group.domain}</span>
+                          <Badge variant="secondary">{group.tabs.length}</Badge>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-2 pt-2">
+                          {group.tabs.map(renderTab)}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onSelect={() => handleCloseGroup(group)}>
+                      <XCircle className="mr-2 h-4 w-4" />
+                      关闭全部分组
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               ))}
             </Accordion>
           </ScrollArea>
