@@ -1,5 +1,9 @@
 # TabHub - 一种更智能的浏览器标签页管理方式
 
+<p align="center">
+  <img src="public/icon/128.png" alt="TabHub Logo" width="128">
+</p>
+
 TabHub 是一款浏览器扩展，旨在帮助您掌控浏览器标签页。它提供了一系列工具来监控、组织和清理您的标签页，从而减少内存占用，提高您的浏览效率。
 
 ## ✨ 功能特性
