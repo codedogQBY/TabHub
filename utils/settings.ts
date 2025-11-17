@@ -7,9 +7,9 @@ const DEFAULT_SETTINGS: Settings = {
   autoSuspendEnabled: false,
   autoSuspendTime: 30, // 30分钟
   tabCountThreshold: 20,
-  memoryThreshold: 2000, // 2GB
   notifications: true,
   whitelist: [],
+  groupingRules: [],
 };
 
 /**

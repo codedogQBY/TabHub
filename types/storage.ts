@@ -20,6 +20,21 @@ export interface Settings {
   tabCountThreshold: number;
   notifications: boolean;
   whitelist: string[];
+  groupingRules: GroupingRule[];
+}
+
+// 规则化分组
+export type GroupingRuleType = 'url' | 'title';
+export type GroupingRulePattern = 'contains' | 'equals' | 'startsWith' | 'endsWith' | 'regex';
+
+export interface GroupingRule {
+  id: string;
+  name: string;
+  type: GroupingRuleType;
+  pattern: GroupingRulePattern;
+  value: string;
+  groupName: string;
+  enabled: boolean;
 }
 
 // 最近关闭的页签

@@ -29,7 +29,7 @@ export interface ResourceStats {
 }
 
 // 分组维度
-export type GroupDimension = 'domain' | 'window' | 'none';
+export type GroupDimension = 'domain' | 'window' | 'none' | 'rule';
 
 // 重复匹配模式
 export type DuplicateMatchMode = 'exact' | 'ignoreParams' | 'ignoreHash';

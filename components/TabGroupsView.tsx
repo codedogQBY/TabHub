@@ -4,7 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Globe, Layout, Layers, X, Volume2, Pin, Copy, XCircle, RefreshCw, VolumeX } from 'lucide-react';
+import { Globe, Layout, Layers, X, Volume2, Pin, Copy, XCircle, RefreshCw, VolumeX, Settings2 } from 'lucide-react';
 import type { TabInfo, TabGroup, GroupDimension } from '@/types';
 import {
   getAllTabs,
@@ -18,6 +18,8 @@ import {
   muteTab,
   reloadTab,
 } from '@/utils/tabs';
+import { getSettings } from '@/utils/settings';
+import { applyGroupingRules } from '@/utils/grouping';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -58,11 +60,20 @@ export function TabGroupsView() {
   }, []);
 
   useEffect(() => {
-    if (groupDimension === 'domain') {
-      setGroups(groupTabsByDomain(allTabs));
-    } else if (groupDimension === 'window') {
-      setGroups(groupTabsByWindow(allTabs));
-    }
+    const groupTabs = async () => {
+      if (groupDimension === 'domain') {
+        setGroups(groupTabsByDomain(allTabs));
+      } else if (groupDimension === 'window') {
+        setGroups(groupTabsByWindow(allTabs));
+      } else if (groupDimension === 'rule') {
+        const settings = await getSettings();
+        const ruleGroups = applyGroupingRules(allTabs, settings.groupingRules);
+        setGroups(ruleGroups);
+      } else {
+        setGroups([]);
+      }
+    };
+    groupTabs();
   }, [allTabs, groupDimension]);
 
   const handleCloseTab = async (tabId: number) => {
@@ -161,7 +172,7 @@ export function TabGroupsView() {
   return (
     <div className="flex flex-col h-full">
       <Tabs value={groupDimension} onValueChange={(value) => setGroupDimension(value as GroupDimension)} className="flex flex-col h-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="domain" className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
             域名
@@ -169,6 +180,10 @@ export function TabGroupsView() {
           <TabsTrigger value="window" className="flex items-center gap-2">
             <Layout className="h-4 w-4" />
             窗口
+          </TabsTrigger>
+          <TabsTrigger value="rule" className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4" />
+            按规则
           </TabsTrigger>
           <TabsTrigger value="none" className="flex items-center gap-2">
             <Layers className="h-4 w-4" />
@@ -227,6 +242,36 @@ export function TabGroupsView() {
                     </div>
                   </AccordionContent>
                 </AccordionItem>
+              ))}
+            </Accordion>
+          </TabsContent>
+
+          <TabsContent value="rule">
+            <Accordion type="multiple" defaultValue={groups.map((_, i) => `item-${i}`)} className="w-full pr-4">
+              {groups.map((group, index) => (
+                <ContextMenu key={group.domain}>
+                  <ContextMenuTrigger>
+                    <AccordionItem value={`item-${index}`}>
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center gap-2 w-full overflow-hidden">
+                          <span className="font-medium truncate">{group.domain}</span>
+                          <Badge variant="secondary">{group.tabs.length}</Badge>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="pt-2">
+                          {group.tabs.map(renderTab)}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onSelect={() => handleCloseGroup(group)}>
+                      <XCircle className="mr-2 h-4 w-4" />
+                      关闭全部分组
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               ))}
             </Accordion>
           </TabsContent>

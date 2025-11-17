@@ -9,6 +9,7 @@ import { SessionManager } from '@/components/SessionManager';
 import { RecentlyClosedTabs } from '@/components/RecentlyClosedTabs';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { WhitelistManager } from '@/components/WhitelistManager';
+import { RuleManager } from '@/components/RuleManager';
 import { getSettings } from '@/utils/settings';
 
 function App() {
@@ -74,10 +75,11 @@ function App() {
 
       {/* 底部操作栏 */}
       <div className="p-4 border-t space-y-2">
-        <DuplicateDetector onComplete={handleOperationComplete} />
         <div className="grid grid-cols-2 gap-2">
+          <DuplicateDetector onComplete={handleOperationComplete} />
           <SessionManager />
           <WhitelistManager />
+          <RuleManager />
         </div>
       </div>
 
