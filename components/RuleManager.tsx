@@ -20,33 +20,28 @@ import { getSettings, saveSettings } from '@/utils/settings';
 export function RuleManager() {
   const [open, setOpen] = useState(false);
   const [rules, setRules] = useState<GroupingRule[]>([]);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isComposing, setIsComposing] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const initialLoadRef = useRef(true);
 
   useEffect(() => {
     if (open) {
-      loadRules();
+      initialLoadRef.current = true;
+      getSettings().then((settings) => {
+        setRules(settings.groupingRules || []);
+      });
     }
   }, [open]);
 
-  const loadRules = async () => {
-    const settings = await getSettings();
-    setRules(settings.groupingRules || []);
-    setIsInitialLoad(true);
-  };
-
   useEffect(() => {
-    if (!isInitialLoad) {
-      const saveRules = async () => {
-        const settings = await getSettings();
-        await saveSettings({ ...settings, groupingRules: rules });
-      };
-      saveRules();
-    } else {
-      setIsInitialLoad(false);
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
     }
-  }, [rules, isInitialLoad]);
+    getSettings().then((settings) => {
+      saveSettings({ ...settings, groupingRules: rules });
+    });
+  }, [rules]);
 
   const handleAddRule = () => {
     const newRule: GroupingRule = {
