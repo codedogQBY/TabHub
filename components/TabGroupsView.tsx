@@ -159,8 +159,8 @@ export function TabGroupsView() {
   );
 
   return (
-    <div className="space-y-4">
-      <Tabs value={groupDimension} onValueChange={(value) => setGroupDimension(value as GroupDimension)}>
+    <div className="flex flex-col h-full">
+      <Tabs value={groupDimension} onValueChange={(value) => setGroupDimension(value as GroupDimension)} className="flex flex-col h-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="domain" className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
@@ -176,9 +176,9 @@ export function TabGroupsView() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="domain" className="mt-4">
-          <ScrollArea className="h-[400px]">
-            <Accordion type="multiple" defaultValue={groups.slice(0, 3).map((_, i) => `item-${i}`)} className="w-full">
+        <div className="flex-1 overflow-y-auto mt-4">
+          <TabsContent value="domain">
+            <Accordion type="multiple" defaultValue={groups.slice(0, 3).map((_, i) => `item-${i}`)} className="w-full pr-4">
               {groups.map((group, index) => (
                 <ContextMenu key={index}>
                   <ContextMenuTrigger>
@@ -208,12 +208,10 @@ export function TabGroupsView() {
                 </ContextMenu>
               ))}
             </Accordion>
-          </ScrollArea>
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value="window" className="mt-4">
-          <ScrollArea className="h-[400px]">
-            <Accordion type="multiple" defaultValue={groups.slice(0, 2).map((_, i) => `item-${i}`)} className="w-full">
+          <TabsContent value="window">
+            <Accordion type="multiple" defaultValue={groups.slice(0, 2).map((_, i) => `item-${i}`)} className="w-full pr-4">
               {groups.map((group, index) => (
                 <AccordionItem key={index} value={`item-${index}`}>
                   <AccordionTrigger className="hover:no-underline">
@@ -231,16 +229,14 @@ export function TabGroupsView() {
                 </AccordionItem>
               ))}
             </Accordion>
-          </ScrollArea>
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value="none" className="mt-4">
-          <ScrollArea className="h-[400px]">
-            <div className="space-y-2">
+          <TabsContent value="none">
+            <div className="space-y-2 pr-4">
               {allTabs.map(renderTab)}
             </div>
-          </ScrollArea>
-        </TabsContent>
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

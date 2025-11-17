@@ -18,7 +18,6 @@ export interface Settings {
   autoSuspendEnabled: boolean;
   autoSuspendTime: number; // 分钟
   tabCountThreshold: number;
-  memoryThreshold: number; // MB
   notifications: boolean;
   whitelist: string[];
 }

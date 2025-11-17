@@ -9,13 +9,41 @@ import { SessionManager } from '@/components/SessionManager';
 import { RecentlyClosedTabs } from '@/components/RecentlyClosedTabs';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { WhitelistManager } from '@/components/WhitelistManager';
+import { getSettings } from '@/utils/settings';
 
 function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const applyTheme = async () => {
+    const settings = await getSettings();
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+
+    if (settings.theme === 'dark') {
+      root.classList.add('dark');
+    } else if (settings.theme === 'light') {
+      root.classList.add('light');
+    } else {
+      // 'auto'
+      const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (isSystemDark) {
+        root.classList.add('dark');
+      }
+    }
+  };
+
+  useEffect(() => {
+    applyTheme();
+  }, []);
+
   const handleOperationComplete = () => {
     setRefreshKey((prev) => prev + 1);
+  };
+
+  const handleSettingsChanged = () => {
+    applyTheme();
+    handleOperationComplete();
   };
 
   return (
@@ -34,7 +62,7 @@ function App() {
           </Button>
           <RecentlyClosedTabs />
           <BatchOperations onComplete={handleOperationComplete} />
-          <SettingsPanel />
+          <SettingsPanel onSettingsChanged={handleSettingsChanged} />
         </div>
       </div>
 

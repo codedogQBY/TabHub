@@ -15,14 +15,17 @@ import { Settings as SettingsIcon, Save } from 'lucide-react';
 import type { Settings } from '@/types/storage';
 import { getSettings, saveSettings, resetSettings } from '@/utils/settings';
 
-export function SettingsPanel() {
+interface SettingsPanelProps {
+  onSettingsChanged: () => void;
+}
+
+export function SettingsPanel({ onSettingsChanged }: SettingsPanelProps) {
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<Settings>({
     theme: 'auto',
     autoSuspendEnabled: false,
     autoSuspendTime: 30,
     tabCountThreshold: 20,
-    memoryThreshold: 2000,
     notifications: true,
     whitelist: [],
   });
@@ -47,6 +50,7 @@ export function SettingsPanel() {
     await saveSettings(settings);
     setSaving(false);
     setSaved(true);
+    onSettingsChanged(); // 调用回调
     setTimeout(() => {
       setOpen(false);
     }, 1500);
@@ -180,38 +184,6 @@ export function SettingsPanel() {
                           className="flex-1"
                         >
                           {count} 个
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>内存阈值 (MB)</Label>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      {[1000, 2000].map((mem) => (
-                        <Button
-                          key={mem}
-                          variant={settings.memoryThreshold === mem ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => updateSetting('memoryThreshold', mem)}
-                          className="flex-1"
-                        >
-                          {mem} MB
-                        </Button>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      {[3000, 4000].map((mem) => (
-                        <Button
-                          key={mem}
-                          variant={settings.memoryThreshold === mem ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => updateSetting('memoryThreshold', mem)}
-                          className="flex-1"
-                        >
-                          {mem} MB
                         </Button>
                       ))}
                     </div>
